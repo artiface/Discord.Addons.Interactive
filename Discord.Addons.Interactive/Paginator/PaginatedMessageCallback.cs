@@ -111,16 +111,21 @@ namespace Discord.Addons.Interactive
                         .AddCriterion(new EnsureFromUserCriterion(reaction.UserId))
                         .AddCriterion(new EnsureIsIntegerCriterion());
                     var response = await Interactive.NextMessageAsync(Context, criteria, TimeSpan.FromSeconds(15));
-                    var request = int.Parse(response.Content);
-                    if (request < 1 || request > pages)
+                    if (response != null)
                     {
+                        var request = int.Parse(response.Content);
+                        if (request < 1 || request > pages)
+                        {
+                            _ = response.DeleteAsync().ConfigureAwait(false);
+                            await Interactive.ReplyAndDeleteAsync(Context, options.Stop.Name);
+                            return;
+                        }
+
+                        page = request;
                         _ = response.DeleteAsync().ConfigureAwait(false);
-                        await Interactive.ReplyAndDeleteAsync(Context, options.Stop.Name);
-                        return;
                     }
-                    page = request;
-                    _ = response.DeleteAsync().ConfigureAwait(false);
                     await RenderAsync().ConfigureAwait(false);
+                    
                 });
             }
             else if (emote.Equals(options.Info))
